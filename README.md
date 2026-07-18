@@ -1,6 +1,6 @@
 # RAMSES Eigenanalysis Tool
 
-A comprehensive MATLAB-based tool for performing eigenanalysis on power system dynamic data extracted from the RAMSES simulator. This tool provides multiple numerical methods for computing eigenvalues and eigenvectors of power system models in descriptor form.
+A comprehensive MATLAB-based tool for performing eigenanalysis on power system dynamic data extracted from the RAMSES simulator, part of the [STEPSS](https://stepss.sps-lab.org/) power system simulation platform. This tool provides multiple numerical methods for computing eigenvalues and eigenvectors of power system models in descriptor form.
 
 ## Overview
 
@@ -11,14 +11,14 @@ The RAMSES Eigenanalysis tool is designed to analyze the small-signal stability 
 - **Multiple Analysis Methods**:
   - **QZ Method**: Standard eigenvalue decomposition using MATLAB's `eig()` function with algebraic variable elimination
   - **ARPACK Method**: Sparse descriptor approach using Krylov-Schur algorithm via MATLAB's `eigs()` function
-  - **Arnoldi Method**: Iterative eigenvalue computation for large systems (commented in code)
+  - **Arnoldi Method**: Iterative shift-invert eigenvalue computation for large systems (commented in code)
   - **JDQR Method**: Jacobi-Davidson QR method for targeted eigenvalue computation
 
 - **Interactive Analysis**: Post-processing tools for examining results including:
   - Dominant eigenvalue identification and filtering
   - Mode shape analysis
   - Participation factor calculations
-  - Damping ratio analysis
+  - Damping factor computation and plotting
   - Interactive result exploration
 
 - **Data Processing**: 
@@ -26,19 +26,9 @@ The RAMSES Eigenanalysis tool is designed to analyze the small-signal stability 
   - Support for descriptor form matrices (A, E)
   - Flexible input format handling
 
-## Installation and Setup
+## Installation
 
-### Prerequisites
-
-1. **MATLAB**: R2016a or later with the following toolboxes:
-   - MATLAB Base
-   - MATLAB Sparse Matrices support
-
-2. **PyRAMSES**: The Python interface to RAMSES simulator
-   - Install from: [stepss.sps-lab.org/pyramses](https://stepss.sps-lab.org/pyramses/)
-   - Required for extracting Jacobian matrices from simulation data
-
-### Installation
+**Requirements:** MATLAB R2016a or later (base MATLAB only — sparse matrices are supported natively and no additional toolboxes are required), and [PyRAMSES](https://stepss.sps-lab.org/pyramses/overview/) — the Python interface to the RAMSES simulator — for extracting Jacobian matrices from simulation data.
 
 1. Clone or download this repository
 2. Add the repository folder to your MATLAB path:
@@ -68,7 +58,7 @@ ssa('jac_val.dat', 'jac_eqs.dat', 'jac_var.dat', 'jac_struc.dat', real_limit, da
 - `jac_var.dat`: Variable descriptions (differential/algebraic)  
 - `jac_struc.dat`: Decomposed power system structure (optional)
 - `real_limit`: Real part threshold for dominant eigenvalues (default: -∞)
-- `damp_ratio`: Damping ratio threshold (default: 1.0)
+- `damp_ratio`: Damping factor limit drawn on the eigenvalue plot (default: 1.0)
 - `method`: Analysis method - 'QZ' or 'ARP' (default: 'QZ')
 
 ### Example Workflow
@@ -106,6 +96,8 @@ ssa('jac_val.dat', 'jac_eqs.dat', 'jac_var.dat', 'jac_struc.dat', real_limit, da
 - Limited post-processing capabilities
 - Memory efficient for large systems
 
+For very large systems (> 50,000 states), use the ARPACK method or uncomment the Arnoldi iterations in `ssa.m`.
+
 ## Output Files
 
 The tool generates several output files:
@@ -114,46 +106,58 @@ The tool generates several output files:
 - `eigs.fig`: Figure showing eigenvalue plot
 - Console output with timing and convergence information
 
+The dynamic (state) Jacobian and the computed eigenvalues/eigenvectors are also assigned to the base MATLAB workspace.
+
 ## Example Files
 
-The `example/` folder contains sample data files and a Jupyter notebook (`simply_load_and_run.ipynb`) demonstrating the complete workflow from PyRAMSES data extraction to MATLAB eigenanalysis.
-
-## System Requirements
-
-- **Small Systems** (< 50,000 states): QZ method recommended
-- **Large Systems** (> 50,000 states): ARPACK method or uncomment Arnoldi iterations in `ssa.m`
-- **Memory**: Depends on system size; ARPACK method is more memory-efficient
+The `example/` folder contains sample data files, a Jupyter notebook (`simply_load_and_run.ipynb`) for extracting the Jacobian data with PyRAMSES, and a `Readme.md` describing the complete workflow through to the MATLAB eigenanalysis.
 
 ## Important Notes
 
 - The Jacobian extraction requires synchronous reference frame in RAMSES settings (`$OMEGA_REF SYN`)
 - The dynamic Jacobian is automatically created in the workspace
-- For very large systems, consider using the commented Arnoldi method in `ssa.m`
+- Mode shapes and participation factors are only available with the QZ method
+- For very large systems, consider using the commented Arnoldi method in `ssa.m`; its sparse solver backend (`scripts/eigs_solver.m`) can optionally use external solvers (KLU, PARDISO) that require separately installed MEX interfaces
 
 ## File Structure
 
 ```
 stepss-eigenanalysis/
-├── ssa.m                    # Main eigenanalysis function
-├── scripts/                 # Analysis functions
-│   ├── init.m              # Data initialization
-│   ├── eigenvals_eig.m     # QZ method implementation
-│   ├── eigenvals_eigs.m    # Arnoldi method implementation
-│   ├── eigenvals_eig_descr.m # ARPACK method implementation
-│   ├── analyze_results.m   # Result analysis and filtering
-│   ├── loop_analysis.m     # Interactive result exploration
+├── ssa.m                      # Main eigenanalysis function
+├── scripts/                   # Analysis functions
+│   ├── init.m                 # Data initialization
+│   ├── calc_Jdyn.m            # Dynamic (state) Jacobian construction
+│   ├── eigenvals_eig.m        # QZ method implementation
+│   ├── eigenvals_eig_descr.m  # ARPACK descriptor method implementation
+│   ├── eigenvals_eigs.m       # Arnoldi (shift-invert) method implementation
+│   ├── eigenvals_jdqr.m       # JDQR method implementation
+│   ├── eigs_solver.m          # Sparse linear solver backend for the Arnoldi method
+│   ├── analyze_results.m      # Result analysis and filtering
+│   ├── loop_analysis.m        # Interactive result exploration
 │   └── ...
-├── example/                 # Sample data and workflows
-└── README.md               # This documentation
+├── example/                   # Sample data and workflows
+├── LICENSE                    # Apache License 2.0
+├── NOTICE                     # Notes on proprietary STEPSS components
+└── README.md                  # This documentation
 ```
 
-## Acknowledgments
+## Documentation
 
-We would like to express our gratitude to the [Sustainable Power Systems Lab (SPSL)](https://sps-lab.org) for their invaluable support and contributions to the development of this project. For questions or support, please contact info@sps-lab.org.
+- [Eigenanalysis user guide](https://stepss.sps-lab.org/user-guide/eigenanalysis/) on the STEPSS documentation site
+- In-source help: run `help ssa` in MATLAB, or see the function headers in `scripts/`
+- [`example/Readme.md`](example/Readme.md): step-by-step example workflow
 
 ## License
 
-See the [LICENSE](LICENSE) file for details.
+The RAMSES Eigenanalysis Tool is distributed under the **Apache License 2.0** — see [LICENSE](LICENSE). Copyright © Petros Aristidou. The [NOTICE](NOTICE) file describes the licensing of proprietary components of the wider STEPSS suite, which are not included in this repository.
+
+## Authors
+
+Developed and maintained by the [Sustainable Power Systems Laboratory (SPS-L)](https://sps-lab.org/) at the Cyprus University of Technology, under the direction of Dr. Petros Aristidou.
+
+The bundled Jacobi-Davidson QR implementation (`scripts/jdqr.m`) is by Gerard Sleijpen (Copyright 1998).
+
+For questions or support, please contact info@sps-lab.org.
 
 ## Citation
 
