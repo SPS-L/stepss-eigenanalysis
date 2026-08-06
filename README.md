@@ -28,7 +28,7 @@ The RAMSES Eigenanalysis tool is designed to analyze the small-signal stability 
 
 ## Installation
 
-**Requirements:** MATLAB R2016a or later (base MATLAB only — sparse matrices are supported natively and no additional toolboxes are required), and [PyRAMSES](https://stepss.sps-lab.org/pyramses/overview/) — the Python interface to the RAMSES simulator — for extracting Jacobian matrices from simulation data.
+**Requirements:** MATLAB R2016a or later (base MATLAB only; sparse matrices are supported natively and no additional toolboxes are required), and [PyRAMSES](https://stepss.sps-lab.org/pyramses/overview/), the Python interface to the RAMSES simulator, for extracting Jacobian matrices from simulation data.
 
 1. Clone or download this repository
 2. Add the repository folder to your MATLAB path:
@@ -149,7 +149,7 @@ stepss-eigenanalysis/
 
 ## License
 
-The RAMSES Eigenanalysis Tool is distributed under the **Apache License 2.0** — see [LICENSE](LICENSE). Copyright © Petros Aristidou. The [NOTICE](NOTICE) file describes the licensing of proprietary components of the wider STEPSS suite, which are not included in this repository.
+The RAMSES Eigenanalysis Tool is distributed under the **Apache License 2.0**. See [LICENSE](LICENSE). Copyright © Petros Aristidou. The [NOTICE](NOTICE) file describes the licensing of proprietary components of the wider STEPSS suite, which are not included in this repository.
 
 ## Authors
 
