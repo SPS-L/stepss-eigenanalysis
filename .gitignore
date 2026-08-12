@@ -1,3 +1,7 @@
 example/eigs.fig
 example/modal_reduction.mat
 example/*.trace
+
+# Jupyter autosaves a copy of every notebook here. The copy drifts from the
+# real notebook beside it and has no value in the repository.
+.ipynb_checkpoints/
