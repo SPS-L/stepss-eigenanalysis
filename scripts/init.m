@@ -4,6 +4,20 @@ global dif_eqs alg_eqs dif_states alg_states raw_vars fig S nbbus adf nbsync nbi
 
 %% Read values file
 raw_val = importdata(jac_val) ;
+% A Jacobian containing NaN or Inf is accepted silently by spconvert and turns
+% the whole spectrum into NaN several steps later, so it is rejected here where
+% the cause is still obvious. Octave returns a non-numeric value from
+% importdata when the file holds NaN text, MATLAB returns the NaN itself.
+if ~isnumeric(raw_val) || size(raw_val,2) < 3
+    error('init:badValFile', ...
+          ['%s is not a plain 3-column coordinate file. Non-numeric entries ' ...
+           'such as NaN in the value column are the usual cause.'], jac_val);
+end
+if ~all(isfinite(raw_val(:,3)))
+    error('init:nonFiniteJacobian', ...
+          '%s holds %d non-finite entries (NaN or Inf) of %d; the spectrum would be all NaN.', ...
+          jac_val, sum(~isfinite(raw_val(:,3))), size(raw_val,1));
+end
 S = spconvert(raw_val) ;
 E = sparse(size(S,1),size(S,1)) ;
 
@@ -53,7 +67,7 @@ alg_eqs=[]; % saves the places of algebraic equations
 
 gamma = sparse(numel(raw_eqs{6}),1);
 for idx = 1:numel(raw_eqs{6})
-    gamma(idx)=raw_eqs{6}(idx);
+    gamma(idx)=double(raw_eqs{6}(idx));
 end
 
 assignin('base', 'gamma', gamma);

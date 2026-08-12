@@ -28,7 +28,9 @@ The RAMSES Eigenanalysis tool is designed to analyze the small-signal stability 
 
 ## Installation
 
-**Requirements:** MATLAB R2016a or later (base MATLAB only; sparse matrices are supported natively and no additional toolboxes are required), and [stepss](https://stepss.sps-lab.org/python/overview/), the Python interface to the RAMSES simulator, for extracting Jacobian matrices from simulation data.
+**Requirements:** MATLAB R2016a or later, or **GNU Octave 8** (base install of either; sparse matrices are supported natively and no additional toolboxes are required), and [stepss](https://stepss.sps-lab.org/python/overview/), the Python interface to the RAMSES simulator, for extracting Jacobian matrices from simulation data.
+
+Under Octave, only the default `QZ` method is available. `ARP` calls `eigs()` for every finite eigenvalue of a pencil whose `E` is singular, which Octave's ARPACK rejects with "Could not build an Arnoldi factorization".
 
 1. Clone or download this repository
 2. Add the repository folder to your MATLAB path:
@@ -98,6 +100,28 @@ ssa('jac_val.dat', 'jac_eqs.dat', 'jac_var.dat', 'jac_struc.dat', real_limit, da
 
 For very large systems (> 50,000 states), use the ARPACK method or uncomment the Arnoldi iterations in `ssa.m`.
 
+## Reference Output Capture
+
+`capture_golden.m` runs the reduction and the dense eigensolve without plotting
+or prompting, and writes the results as plain text. It is the reference the
+MATLAB-free implementations are validated against:
+
+```sh
+octave --no-window-system --quiet --eval \
+  "addpath('.','scripts'); capture_golden('example/test', 'golden')"
+```
+
+It writes `<name>_Asys.txt` (the state matrix, which separates a reduction error
+from an eigensolve error), `<name>_eigs.txt`, `<name>_pf.txt` and
+`<name>_states.txt`, and it fails if the eigenpair residual is too large to be
+used as a reference.
+
+Eigenvectors are deliberately not captured: their scale and phase are
+arbitrary, and for repeated eigenvalues they are not unique. Participation
+factors are only comparable for simple eigenvalues for the same reason, which
+matters here because identical machine models produce identical poles in
+quantity.
+
 ## Output Files
 
 The tool generates several output files:
@@ -124,6 +148,7 @@ The `example/` folder contains sample data files, a Jupyter notebook (`simply_lo
 ```
 stepss-eigenanalysis/
 ├── ssa.m                      # Main eigenanalysis function
+├── capture_golden.m           # Headless reference-output capture (no plots, no prompts)
 ├── scripts/                   # Analysis functions
 │   ├── init.m                 # Data initialization
 │   ├── calc_Jdyn.m            # Dynamic (state) Jacobian construction

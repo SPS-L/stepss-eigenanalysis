@@ -30,6 +30,11 @@
 %  dominant (optional, default=-inf)
 %  damp_ratio : Dumping ratio above which the eigenvalue is considered as
 %  dominant (optional, default=1.0)
+%  Runs under MATLAB R2016a or later and under GNU Octave 8. Only the 'QZ'
+%  method is supported on Octave: 'ARP' calls eigs() for every finite
+%  eigenvalue of a pencil with singular E, which Octave's ARPACK refuses with
+%  "Could not build an Arnoldi factorization".
+%
 %  method: The default method is 'QZ' through eig() which requires to make an
 %  ellimination of the algebraic variables. If you pass 'ARP' then it will
 %  use the descriptor method with the sparse matrices (A,E) and the
@@ -112,7 +117,10 @@ elseif strcmp(analysis,'ARP')
     eigenvals_eig_descr();
 end
 analyze_results(real_limit, damp_ratio);
-evalin('base', 'save(''modal_reduction'')');
+% '-v7' is given explicitly so MATLAB and Octave both write a MAT file of the
+% same name and format. Octave's bare save() would write its own format to a
+% file with no extension.
+evalin('base', 'save(''modal_reduction.mat'', ''-v7'')');
 evalin('base', 'savefig(''eigs'')');
 loop_analysis();
 % fprintf('\nExecute ssa to rerun the analysis.\n');

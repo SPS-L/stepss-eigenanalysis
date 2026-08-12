@@ -5,3 +5,8 @@ example/*.trace
 # Jupyter autosaves a copy of every notebook here. The copy drifts from the
 # real notebook beside it and has no value in the repository.
 .ipynb_checkpoints/
+
+# Editor and agent scratch directories. A stray committed gitlink under
+# .claude/ previously broke clone --recurse-submodules for the whole umbrella.
+.claude/
+.mcp.json

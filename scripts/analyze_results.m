@@ -167,20 +167,20 @@ xlim([xmin xmax]);
 ylim([ymin ymax]);
  
 lh = line([real_limit,real_limit],[ymin,ymax],'Color','g');
-lh.DisplayName = 'Dominant Eigenvalues Real Limit';
+set(lh, 'DisplayName', 'Dominant Eigenvalues Real Limit');
 lh = line([0,0],[ymin,ymax],'Color','r');
-lh.DisplayName = 'Imaginary Axis';
+set(lh, 'DisplayName', 'Imaginary Axis');
 
 if ymin < xmin
     lh = line([0,ymin],[0,ymin*tan(acos(damp_ratio))],'Color','b');
-    lh.DisplayName = 'DF Limit';
+    set(lh, 'DisplayName', 'DF Limit');
     lh = line([0,ymin],[0,ymax*tan(acos(damp_ratio))],'Color','b');
-    lh.DisplayName = 'DF Limit';
+    set(lh, 'DisplayName', 'DF Limit');
 else
     lh = line([0,xmin],[0,xmin*tan(acos(damp_ratio))],'Color','b');
-    lh.DisplayName = 'DF Limit';
+    set(lh, 'DisplayName', 'DF Limit');
     lh = line([0,xmin],[0,-xmin*tan(acos(damp_ratio))],'Color','b');
-    lh.DisplayName = 'DF Limit';
+    set(lh, 'DisplayName', 'DF Limit');
 end
 hold on
 end
