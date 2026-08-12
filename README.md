@@ -122,6 +122,37 @@ factors are only comparable for simple eigenvalues for the same reason, which
 matters here because identical machine models produce identical poles in
 quantity.
 
+## Fixtures and goldens
+
+`fixtures/` holds four self-contained Jacobian exports, so `tests/test_golden.py`
+runs against them with no RAMSES licence and no MATLAB:
+
+- `kundur_pss` and `kundur_nopss`: exported from the Kundur two-area system
+  (Kundur, *Power System Stability and Control*, Example 12.6), with and
+  without the power system stabiliser respectively
+- `test` and `1link_island`: copied from the matching `example/*.dat` files
+
+`example/py_*.dat` is quarantined and deliberately excluded from `fixtures/`:
+it holds 3,819 NaN entries, and `capture_golden` refuses to process it.
+
+`golden/` holds the reference outputs for each case, captured with GNU Octave
+via `capture_golden.m`:
+
+```sh
+octave --no-window-system --quiet --eval \
+  "addpath('.','scripts'); \
+   capture_golden('fixtures/kundur_pss', 'golden'); \
+   capture_golden('fixtures/kundur_nopss', 'golden'); \
+   capture_golden('fixtures/test', 'golden'); \
+   capture_golden('fixtures/1link_island', 'golden', 'fixtures/1link_island_struc.dat')"
+```
+
+`tests/test_golden.py` checks properties that hold on the goldens alone (the
+captured eigenvalues solve the captured state matrix, participation columns
+peak at 1, state labels line up with participation rows), plus the physical
+sanity check from Kundur Example 12.6: the inter-area mode is unstable without
+the PSS and damped with it.
+
 ## Output Files
 
 The tool generates several output files:
