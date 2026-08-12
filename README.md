@@ -28,7 +28,7 @@ The RAMSES Eigenanalysis tool is designed to analyze the small-signal stability 
 
 ## Installation
 
-**Requirements:** MATLAB R2016a or later (base MATLAB only; sparse matrices are supported natively and no additional toolboxes are required), and [PyRAMSES](https://stepss.sps-lab.org/pyramses/overview/), the Python interface to the RAMSES simulator, for extracting Jacobian matrices from simulation data.
+**Requirements:** MATLAB R2016a or later (base MATLAB only; sparse matrices are supported natively and no additional toolboxes are required), and [stepss](https://stepss.sps-lab.org/python/overview/), the Python interface to the RAMSES simulator, for extracting Jacobian matrices from simulation data.
 
 1. Clone or download this repository
 2. Add the repository folder to your MATLAB path:
@@ -63,11 +63,11 @@ ssa('jac_val.dat', 'jac_eqs.dat', 'jac_var.dat', 'jac_struc.dat', real_limit, da
 
 ### Example Workflow
 
-1. **Extract Jacobian Data**: Use PyRAMSES to generate the required data files
+1. **Extract Jacobian Data**: Use stepss to generate the required data files
    ```python
-   import pyramses
-   ram = pyramses.sim()
-   case = pyramses.cfg('cmd.txt')
+   import stepss
+   ram = stepss.sim()
+   case = stepss.cfg('cmd.txt')
    ram.execSim(case)
    ```
 
@@ -110,7 +110,7 @@ The dynamic (state) Jacobian and the computed eigenvalues/eigenvectors are also 
 
 ## Example Files
 
-The `example/` folder contains sample data files, a Jupyter notebook (`simply_load_and_run.ipynb`) for extracting the Jacobian data with PyRAMSES, and a `Readme.md` describing the complete workflow through to the MATLAB eigenanalysis.
+The `example/` folder contains sample data files, a Jupyter notebook (`simply_load_and_run.ipynb`) for extracting the Jacobian data with stepss, and a `Readme.md` describing the complete workflow through to the MATLAB eigenanalysis.
 
 ## Important Notes
 

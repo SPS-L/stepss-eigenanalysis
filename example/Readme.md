@@ -1,6 +1,6 @@
 # Procedure
 
-This procedure assumes you have pyramses (pyramses.SPS-L.org) installed.
+This procedure assumes you have stepss (stepss.sps-lab.org) installed.
 
 1. Load the python file simply_load_and_run.ipynb and execute the cell. This will load the data and extract the Jacobian in the form of 4 files ('jac_val.dat','jac_eqs.dat','jac_var.dat','jac_struc.dat').
 2. Load MATLAB in the folder and run ssa('jac_val.dat','jac_eqs.dat','jac_var.dat','jac_struc.dat'). You will get the eigenvalues and their plot.
