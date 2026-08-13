@@ -10,3 +10,7 @@ example/*.trace
 # .claude/ previously broke clone --recurse-submodules for the whole umbrella.
 .claude/
 .mcp.json
+
+# pytest artefacts from tests/test_golden.py
+__pycache__/
+.pytest_cache/
