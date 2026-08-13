@@ -1,220 +1,141 @@
-# RAMSES Eigenanalysis Tool
+# STEPSS Eigenanalysis Reference Data
 
-A comprehensive MATLAB-based tool for performing eigenanalysis on power system dynamic data extracted from the RAMSES simulator, part of the [STEPSS](https://stepss.sps-lab.org/) power system simulation platform. This tool provides multiple numerical methods for computing eigenvalues and eigenvectors of power system models in descriptor form.
+Reference spectra and the validation suite for small-signal stability analysis
+in [STEPSS](https://stepss.sps-lab.org/).
 
-## Overview
+**The analysis itself lives in RAMSES.** The engine reduces the linearised
+differential-algebraic model to a state matrix, solves the eigenproblem, and
+writes eigenvalues, damping ratios, participation factors and mode shapes,
+triggered by an `EIG` disturbance or the `run_ssa` C entry. See the
+[eigenanalysis user guide](https://stepss.sps-lab.org/user-guide/eigenanalysis/).
 
-The RAMSES Eigenanalysis tool is designed to analyze the small-signal stability of power systems by computing eigenvalues and eigenvectors of the system Jacobian matrix. It supports both differential-algebraic equation (DAE) systems and provides various computational methods optimized for different system sizes and requirements.
+This repository holds the independently captured reference data that the engine
+is checked against, plus the tests that check it. Nothing here is required to
+run an analysis.
 
-## Features
+## Why a separate repository
 
-- **Multiple Analysis Methods**:
-  - **QZ Method**: Standard eigenvalue decomposition using MATLAB's `eig()` function with algebraic variable elimination
-  - **ARPACK Method**: Sparse descriptor approach using Krylov-Schur algorithm via MATLAB's `eigs()` function
-  - **Arnoldi Method**: Iterative shift-invert eigenvalue computation for large systems (commented in code)
-  - **JDQR Method**: Jacobi-Davidson QR method for targeted eigenvalue computation
-
-- **Interactive Analysis**: Post-processing tools for examining results including:
-  - Dominant eigenvalue identification and filtering
-  - Mode shape analysis
-  - Participation factor calculations
-  - Damping factor computation and plotting
-  - Interactive result exploration
-
-- **Data Processing**: 
-  - Automatic Jacobian matrix extraction from RAMSES simulation data
-  - Support for descriptor form matrices (A, E)
-  - Flexible input format handling
-
-## Installation
-
-**Requirements:** MATLAB R2016a or later, or **GNU Octave 8** (base install of either; sparse matrices are supported natively and no additional toolboxes are required), and [stepss](https://stepss.sps-lab.org/python/overview/), the Python interface to the RAMSES simulator, for extracting Jacobian matrices from simulation data.
-
-Under Octave, only the default `QZ` method is available. `ARP` calls `eigs()` for every finite eigenvalue of a pencil whose `E` is singular, which Octave's ARPACK rejects with "Could not build an Arnoldi factorization".
-
-1. Clone or download this repository
-2. Add the repository folder to your MATLAB path:
-   ```matlab
-   addpath('path/to/stepss-eigenanalysis')
-   addpath('path/to/stepss-eigenanalysis/scripts')
-   ```
-
-## Usage
-
-### Basic Usage
-
-The main function `ssa()` performs the eigenanalysis:
-
-```matlab
-% Basic usage with default settings
-ssa('jac_val.dat', 'jac_eqs.dat', 'jac_var.dat', 'jac_struc.dat')
-
-% With custom parameters
-ssa('jac_val.dat', 'jac_eqs.dat', 'jac_var.dat', 'jac_struc.dat', real_limit, damp_ratio, method)
-```
-
-### Function Parameters
-
-- `jac_val.dat`: Matrix values in coordinate format
-- `jac_eqs.dat`: Equation descriptions (differential/algebraic)
-- `jac_var.dat`: Variable descriptions (differential/algebraic)  
-- `jac_struc.dat`: Decomposed power system structure (optional)
-- `real_limit`: Real part threshold for dominant eigenvalues (default: -∞)
-- `damp_ratio`: Damping factor limit drawn on the eigenvalue plot (default: 1.0)
-- `method`: Analysis method - 'QZ' or 'ARP' (default: 'QZ')
-
-### Example Workflow
-
-1. **Extract Jacobian Data**: Use stepss to generate the required data files
-   ```python
-   import stepss
-   ram = stepss.sim()
-   case = stepss.cfg('cmd.txt')
-   ram.execSim(case)
-   ```
-
-2. **Run Eigenanalysis**: Execute in MATLAB
-   ```matlab
-   ssa('jac_val.dat', 'jac_eqs.dat', 'jac_var.dat', 'jac_struc.dat')
-   ```
-
-3. **Interactive Analysis**: Use the interactive menu to explore results:
-   - View dominant eigenvalues
-   - Analyze mode shapes
-   - Calculate participation factors
-   - Examine system structure
-
-### Analysis Methods
-
-#### QZ Method (Default)
-- Suitable for small to medium systems (< 50,000 states)
-- Provides complete eigenvalue spectrum
-- Supports mode shape and participation factor analysis
-- Uses algebraic variable elimination
-
-#### ARPACK Method
-- Optimized for large sparse systems
-- Uses descriptor form directly (no elimination)
-- Limited post-processing capabilities
-- Memory efficient for large systems
-
-For very large systems (> 50,000 states), use the ARPACK method or uncomment the Arnoldi iterations in `ssa.m`.
-
-## Reference Output Capture
-
-`capture_golden.m` runs the reduction and the dense eigensolve without plotting
-or prompting, and writes the results as plain text. It is the reference the
-MATLAB-free implementations are validated against:
+The reference spectra were **not** produced by RAMSES. They were captured from an
+independent implementation, so comparing the engine against them is a real
+check rather than a self-fulfilling one. Keeping them outside the engine
+repository also means these tests need neither a RAMSES licence nor the engine
+itself: they run on numpy and pytest alone.
 
 ```sh
-octave --no-window-system --quiet --eval \
-  "addpath('.','scripts'); capture_golden('example/test', 'golden')"
+pip install numpy pytest
+python -m pytest tests/ -v
 ```
 
-It writes `<name>_Asys.txt` (the state matrix, which separates a reduction error
-from an eigensolve error), `<name>_eigs.txt`, `<name>_pf.txt` and
-`<name>_states.txt`, and it fails if the eigenpair residual is too large to be
-used as a reference.
+## Layout
 
-Eigenvectors are deliberately not captured: their scale and phase are
-arbitrary, and for repeated eigenvalues they are not unique. Participation
-factors are only comparable for simple eigenvalues for the same reason, which
-matters here because identical machine models produce identical poles in
-quantity.
+| Path | Contents |
+|---|---|
+| `fixtures/` | Exported Jacobians: four self-contained cases |
+| `golden/` | Reference outputs for each case |
+| `tests/` | The pytest suite |
+| `scripts/`, `ssa.m`, `capture_golden.m` | The retired reference implementation, kept only to regenerate `golden/` |
 
-## Fixtures and goldens
+### Cases
 
-`fixtures/` holds four self-contained Jacobian exports, so `tests/test_golden.py`
-runs against them with no RAMSES licence and no MATLAB:
+| Case | States | Notes |
+|---|---|---|
+| `kundur_pss` | 70 | Kundur two-area with power system stabilisers |
+| `kundur_nopss` | 70 | Identical but with `KSTAB = 0`, giving an unstable inter-area mode |
+| `test` | 312 | Larger case, exercises scale |
+| `1link_island` | 24 | Small case with a two-port and an island |
 
-- `kundur_pss` and `kundur_nopss`: exported from the Kundur two-area system
-  (Kundur, *Power System Stability and Control*, Example 12.6), with and
-  without the power system stabiliser respectively
-- `test` and `1link_island`: copied from the matching `example/*.dat` files
+`example/py_*.dat` is **quarantined and deliberately excluded**: it holds 3,819
+NaN entries in three equations of every exciter, and the capture script refuses
+it.
 
-`example/py_*.dat` is quarantined and deliberately excluded from `fixtures/`:
-it holds 3,819 NaN entries, and `capture_golden` refuses to process it.
+### Reference outputs
 
-`golden/` holds the reference outputs for each case, captured with GNU Octave
-via `capture_golden.m`:
+For each case, `golden/` holds `<name>_Asys.txt` (the state matrix),
+`<name>_eigs.txt` (eigenvalues), `<name>_pf.txt` (participation factors) and
+`<name>_states.txt` (the state labels that index the participation rows).
+
+Capturing `A_sys` separately from the eigenvalues is deliberate: it separates a
+reduction error from an eigensolve error, which are otherwise indistinguishable
+from a single failing comparison.
+
+**Eigenvectors are not captured.** Their scale and phase are arbitrary, and for
+a repeated eigenvalue they are not unique at all, so they cannot serve as a
+reference.
+
+## What the tests assert
+
+`tests/test_golden.py` checks properties that hold on the reference data alone:
+that the captured eigenvalues really are the spectrum of the captured state
+matrix, that participation columns are normalised, and that the state labels
+line up with the participation rows.
+
+The assertion worth knowing about is the physical one. In the Kundur two-area
+system the inter-area mode near 0.62 Hz is **unstable without the stabilisers**
+and well damped with them:
+
+| | inter-area | area 1 local | area 2 local |
+|---|---|---|---|
+| `kundur_nopss` | 0.625 Hz, zeta = **-0.0233** | 1.085 Hz, zeta = 0.099 | 1.116 Hz, zeta = 0.097 |
+| `kundur_pss` | 0.624 Hz, zeta = **+0.1087** | 1.242 Hz, zeta = 0.288 | 1.295 Hz, zeta = 0.287 |
+
+The sign flip is what a numerical regression cannot satisfy by accident, which
+is why it is the assertion the engine's own release gate turns on. It reproduces
+Kundur, *Power System Stability and Control*, Example 12.6.
+
+## Degenerate eigenvalues
+
+Identical device models with identical parameters produce identical poles, so
+these spectra are heavily degenerate: 20 of the 70 modes in `kundur_nopss`, and
+44 of the 312 in `test`.
+
+**In a degenerate eigenspace the eigenvectors are not unique**, so per-mode
+participation factors there are basis-dependent and differ legitimately between
+implementations. Any comparison against `golden/*_pf.txt` must therefore be
+restricted to modes whose gap to every other eigenvalue exceeds a tolerance.
+Measured on `test`, the difference is 1.2e-08 across the 268 simple modes
+against 7.6e-01 across the 44 degenerate ones, so a naive all-modes comparison
+fails on correct code.
+
+The engine reports this directly: `<name>_modes.dat` carries a simplicity flag
+per mode.
+
+## Regenerating the reference data
+
+Only needed if a fixture changes. `capture_golden.m` runs the reduction and the
+dense eigensolve with no plotting or prompting, and refuses to emit a reference
+whose eigenpair residual is too large.
+
+It runs under **GNU Octave 8**, which is free, so regenerating needs no
+commercial licence:
 
 ```sh
 octave --no-window-system --quiet --eval \
   "addpath('.','scripts'); \
-   capture_golden('fixtures/kundur_pss', 'golden'); \
+   capture_golden('fixtures/kundur_pss',   'golden'); \
    capture_golden('fixtures/kundur_nopss', 'golden'); \
-   capture_golden('fixtures/test', 'golden'); \
+   capture_golden('fixtures/test',         'golden'); \
    capture_golden('fixtures/1link_island', 'golden', 'fixtures/1link_island_struc.dat')"
 ```
 
-`tests/test_golden.py` checks properties that hold on the goldens alone (the
-captured eigenvalues solve the captured state matrix, participation columns
-peak at 1, state labels line up with participation rows), plus the physical
-sanity check from Kundur Example 12.6: the inter-area mode is unstable without
-the PSS and damped with it.
-
-## Output Files
-
-The tool generates several output files:
-
-- `modal_reduction.mat`: MATLAB workspace with all computed results
-- `eigs.fig`: Figure showing eigenvalue plot
-- Console output with timing and convergence information
-
-The dynamic (state) Jacobian and the computed eigenvalues/eigenvectors are also assigned to the base MATLAB workspace.
-
-## Example Files
-
-The `example/` folder contains sample data files, a Jupyter notebook (`simply_load_and_run.ipynb`) for extracting the Jacobian data with stepss, and a `Readme.md` describing the complete workflow through to the MATLAB eigenanalysis.
-
-## Important Notes
-
-- The Jacobian extraction requires synchronous reference frame in RAMSES settings (`$OMEGA_REF SYN`)
-- The dynamic Jacobian is automatically created in the workspace
-- Mode shapes and participation factors are only available with the QZ method
-- For very large systems, consider using the commented Arnoldi method in `ssa.m`; its sparse solver backend (`scripts/eigs_solver.m`) can optionally use external solvers (KLU, PARDISO) that require separately installed MEX interfaces
-
-## File Structure
-
-```
-stepss-eigenanalysis/
-├── ssa.m                      # Main eigenanalysis function
-├── capture_golden.m           # Headless reference-output capture (no plots, no prompts)
-├── scripts/                   # Analysis functions
-│   ├── init.m                 # Data initialization
-│   ├── calc_Jdyn.m            # Dynamic (state) Jacobian construction
-│   ├── eigenvals_eig.m        # QZ method implementation
-│   ├── eigenvals_eig_descr.m  # ARPACK descriptor method implementation
-│   ├── eigenvals_eigs.m       # Arnoldi (shift-invert) method implementation
-│   ├── eigenvals_jdqr.m       # JDQR method implementation
-│   ├── eigs_solver.m          # Sparse linear solver backend for the Arnoldi method
-│   ├── analyze_results.m      # Result analysis and filtering
-│   ├── loop_analysis.m        # Interactive result exploration
-│   └── ...
-├── example/                   # Sample data and workflows
-├── LICENSE                    # Apache License 2.0
-├── NOTICE                     # Notes on proprietary STEPSS components
-└── README.md                  # This documentation
-```
-
-## Documentation
-
-- [Eigenanalysis user guide](https://stepss.sps-lab.org/user-guide/eigenanalysis/) on the STEPSS documentation site
-- In-source help: run `help ssa` in MATLAB, or see the function headers in `scripts/`
-- [`example/Readme.md`](example/Readme.md): step-by-step example workflow
+The `.m` sources under `scripts/` are the retired implementation, kept for this
+purpose and for provenance. They are not a supported way to analyse a system;
+use the engine.
 
 ## License
 
-The RAMSES Eigenanalysis Tool is distributed under the **Apache License 2.0**. See [LICENSE](LICENSE). Copyright © Petros Aristidou. The [NOTICE](NOTICE) file describes the licensing of proprietary components of the wider STEPSS suite, which are not included in this repository.
+Apache License 2.0. See [LICENSE](LICENSE). Copyright © Petros Aristidou.
+[NOTICE](NOTICE) describes the licensing of proprietary components of the wider
+STEPSS suite, which are not included here.
 
-## Authors
+Developed and maintained by the
+[Sustainable Power Systems Laboratory (SPS-L)](https://sps-lab.org/) at the
+Cyprus University of Technology, under the direction of Dr. Petros Aristidou.
 
-Developed and maintained by the [Sustainable Power Systems Laboratory (SPS-L)](https://sps-lab.org/) at the Cyprus University of Technology, under the direction of Dr. Petros Aristidou.
+The Kundur fixtures derive from
+[SPS-L/stepss-test-systems](https://github.com/SPS-L/stepss-test-systems)
+(Apache-2.0). Please cite the original source of the system data:
 
-The bundled Jacobi-Davidson QR implementation (`scripts/jdqr.m`) is by Gerard Sleijpen (Copyright 1998).
+> P. Kundur, *Power System Stability and Control*, McGraw-Hill, 1994
+> (two-area system, Example 12.6).
 
 For questions or support, please contact info@sps-lab.org.
-
-## Citation
-
-If you use this tool in your research, please cite the relevant papers from the Sustainable Power Systems Lab and acknowledge the use of this eigenanalysis tool.

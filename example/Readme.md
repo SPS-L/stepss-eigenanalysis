@@ -1,14 +1,41 @@
-# Procedure
+# Archived example data
 
-This procedure assumes you have stepss (stepss.sps-lab.org) installed.
+These files are kept as historical inputs and are **not** the way to run a
+small-signal analysis.
 
-1. Load the python file simply_load_and_run.ipynb and execute the cell. This will load the data and extract the Jacobian in the form of 4 files ('jac_val.dat','jac_eqs.dat','jac_var.dat','jac_struc.dat').
-2. Load MATLAB in the folder and run ssa('jac_val.dat','jac_eqs.dat','jac_var.dat','jac_struc.dat'). You will get the eigenvalues and their plot.
-3. Use the interactive commands to get more information.
+RAMSES performs the analysis itself. Schedule an `EIG` disturbance and it writes
+the modes, participation factors and mode shapes directly:
 
-## Comments
+```python
+ram.execSim(case, 0.0)
+ram.addDisturb(0.001, "EIG 'ssa'")
+ram.contSim(0.01)
+```
 
-- The command to extract the Jacobian works only if you use synchronous reference frame in the settings ($OMEGA_REF SYN ;).
-- The dynamic Jacobian is created automatically in the workspace.
-- You can limit the eigenvalues you see by giving more arguments to the ssa script. See ssa.m for documentation.
-- This only works for small systems. In large ones (e.e., more than 50k states), you would need to run the ARNOLDI method in the ssa.m which is currently commented out.
+See the [eigenanalysis user guide](https://stepss.sps-lab.org/user-guide/eigenanalysis/)
+for the output format and the required settings, and the annotated notebook
+under `examples/eigenanalysis/` in the `stepss` package for a full walkthrough
+on the Kundur two-area system.
+
+## About these files
+
+`simply_load_and_run.ipynb` extracts a Jacobian into the four `*_val.dat`,
+`*_eqs.dat`, `*_var.dat` and `*_struc.dat` files using the `JAC` disturbance.
+That export still exists and is still useful if you want to drive your own
+solver, but `getJac()` returns the same matrices directly as SciPy sparse
+objects without the intermediate files.
+
+The `test_*` and `1link_island_*` sets here are the originals of the copies
+under `fixtures/`, which are what the test suite actually uses.
+
+`py_*` is **defective and must not be used**: it holds 3,819 NaN entries in
+three equations of every exciter in the case. `capture_golden.m` refuses it, and
+the earlier MATLAB code would have consumed it silently and returned an all-NaN
+spectrum.
+
+## Notes that still apply
+
+- The Jacobian export requires the synchronous reference frame
+  (`$OMEGA_REF SYN ;`). Under the centre-of-inertia frame the export is skipped.
+- The four-file export comes from the decomposed scheme (`$SCHEME DE`); the
+  integrated scheme writes three, omitting `*_struc.dat`.
