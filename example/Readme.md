@@ -29,9 +29,9 @@ The `test_*` and `1link_island_*` sets here are the originals of the copies
 under `fixtures/`, which are what the test suite actually uses.
 
 `py_*` is **defective and must not be used**: it holds 3,819 NaN entries in
-three equations of every exciter in the case. `capture_golden.m` refuses it, and
-the earlier MATLAB code would have consumed it silently and returned an all-NaN
-spectrum.
+three equations of every exciter in the case. `capture_golden.py` refuses it,
+where the retired implementation would have consumed it silently and returned an
+all-NaN spectrum.
 
 ## Notes that still apply
 

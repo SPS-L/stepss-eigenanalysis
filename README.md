@@ -33,7 +33,7 @@ python -m pytest tests/ -v
 | `fixtures/` | Exported Jacobians: four self-contained cases |
 | `golden/` | Reference outputs for each case |
 | `tests/` | The pytest suite |
-| `scripts/`, `ssa.m`, `capture_golden.m` | The retired reference implementation, kept only to regenerate `golden/` |
+| `capture_golden.py` | Regenerates `golden/` from `fixtures/` |
 
 ### Cases
 
@@ -101,25 +101,23 @@ per mode.
 
 ## Regenerating the reference data
 
-Only needed if a fixture changes. `capture_golden.m` runs the reduction and the
-dense eigensolve with no plotting or prompting, and refuses to emit a reference
-whose eigenpair residual is too large.
-
-It runs under **GNU Octave 8**, which is free, so regenerating needs no
-commercial licence:
+Only needed if a fixture changes:
 
 ```sh
-octave --no-window-system --quiet --eval \
-  "addpath('.','scripts'); \
-   capture_golden('fixtures/kundur_pss',   'golden'); \
-   capture_golden('fixtures/kundur_nopss', 'golden'); \
-   capture_golden('fixtures/test',         'golden'); \
-   capture_golden('fixtures/1link_island', 'golden', 'fixtures/1link_island_struc.dat')"
+for case in kundur_pss kundur_nopss test 1link_island; do
+    python capture_golden.py fixtures/$case golden
+done
 ```
 
-The `.m` sources under `scripts/` are the retired implementation, kept for this
-purpose and for provenance. They are not a supported way to analyse a system;
-use the engine.
+`capture_golden.py` refuses to emit a reference whose eigenpair residual is too
+large, so a silent pass is a real pass.
+
+It shares no code with the Fortran engine it validates, which is what makes
+agreement between them evidence rather than a tautology. It is a port of the
+retired MATLAB implementation that originally produced these files, and
+reproduces them to 1e-15 on the state matrix and 1e-14 on the eigenvalues. The
+MATLAB sources themselves are gone; recover them from the history before commit
+`1b604db` if you ever need to re-check that equivalence.
 
 ## License
 
